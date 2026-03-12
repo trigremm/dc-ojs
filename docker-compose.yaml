@@ -1,0 +1,47 @@
+services:
+  db:
+    image: mariadb:11.8
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: "${OJS_DB_ROOT_PASSWORD:-changeMePlease}"
+      MYSQL_DATABASE: "${OJS_DB_NAME:-ojs}"
+      MYSQL_USER: "${OJS_DB_USER:-ojs}"
+      MYSQL_PASSWORD: "${OJS_DB_PASSWORD:-changeMePlease}"
+    restart: always
+    volumes:
+      - ./.docker_volumes/db:/var/lib/mysql
+      - ./.docker_volumes/logs/db:/var/log/mysql
+      - ./config/db.charset.conf:/etc/mysql/conf.d/charset.cnf
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ojs:
+    build:
+      context: ./backend
+      args:
+        OJS_VERSION: "${OJS_VERSION:-3.5.0-3}"
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:${DC_OJS_HTTP_PORT:-8081}:80"
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./.docker_volumes/private:/var/www/files
+      - ./.docker_volumes/public:/var/www/html/public
+      - ./.docker_volumes/logs/app:/var/log/apache2
+      - ./config/ojs.config.inc.php:/var/www/html/config.inc.php
+      - ./config/php.custom.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:80/index.php/index/install"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
