@@ -27,15 +27,15 @@ Visit `http://localhost:8060` to complete the web installer.
 
 ### Web installer settings
 
-| Field              | Value                        |
-|--------------------|------------------------------|
-| Database driver    | `mysqli`                     |
-| Host               | `db`                         |
-| Username           | value from `OJS_DB_USER`     |
-| Password           | value from `OJS_DB_PASSWORD` |
-| Database name      | value from `OJS_DB_NAME`     |
-| Create new database| **unchecked**                |
-| Files directory    | `/var/www/files`             |
+| Field               | Value                        |
+| ------------------- | ---------------------------- |
+| Database driver     | `mysqli`                     |
+| Host                | `db`                         |
+| Username            | value from `OJS_DB_USER`     |
+| Password            | value from `OJS_DB_PASSWORD` |
+| Database name       | value from `OJS_DB_NAME`     |
+| Create new database | **unchecked**                |
+| Files directory     | `/var/www/files`             |
 
 ## Commands
 
@@ -85,11 +85,46 @@ make ojs-db-shell    # mariadb CLI
 - `makefiles/` — Makefile fragments (`docker_compose.mk`, `ojs.mk`) included from root `Makefile`
 - `.docker_volumes/` — persistent data (db, html, private, apache_logs, backups) — gitignored
 
+## Storage
+
+OJS splits data between two backends:
+
+| What                                                                                        | Where                                                        |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Article metadata, users, review comments, issue structure, workflow state                   | **MariaDB** (`.docker_volumes/db/`)                          |
+| Submission PDFs/DOCX, supplementary files, reviewer attachments, revisions, TinyMCE uploads | **Filesystem** `/var/www/files` → `.docker_volumes/private/` |
+| Public images (issue covers, journal logos)                                                 | `.docker_volumes/html/public/`                               |
+
+**OJS does not natively support S3** or other object stores as of 3.5 — it's an [open feature request](https://forum.pkp.sfu.ca/t/adding-object-storage-functionality-to-ojs/97667). Workarounds: FUSE-mount an S3 bucket (`s3fs-fuse`, `rclone mount`, AWS S3 Files), or run `rclone sync` on backups to push cold copies to S3/B2.
+
+### Disk usage estimates
+
+Per-article footprint (full workflow: submission → reviews → revisions → publication):
+
+| Content                                         | Typical size  |
+| ----------------------------------------------- | ------------- |
+| Submission PDF                                  | 2–10 MB       |
+| Supplementary files (data, figures)             | 5–50 MB       |
+| Review attachments (annotated PDFs × reviewers) | 10–80 MB      |
+| Revisions (each version stored in full)         | ×2–4          |
+| **Total per article**                           | **50–300 MB** |
+
+Annual estimates by journal size:
+
+| Journal profile | Articles/year | Expected storage/year |
+| --------------- | ------------- | --------------------- |
+| Small           | ~50           | 5–15 GB               |
+| Medium          | ~200          | 20–60 GB              |
+| Large           | 1000+         | 100+ GB               |
+
+Plan for **2–3× headroom** to cover `make ojs-backup` archives living in `.docker_volumes/backups/`.
+
 ## Security checklist
 
 Before exposing this setup beyond localhost, go through:
 
 **Must do:**
+
 - [ ] Rotate `OJS_DB_ROOT_PASSWORD` and `OJS_DB_PASSWORD` in `.env` (no `change_me_*` values)
 - [ ] `chmod 600 .env` so secrets are not world-readable on the host
 - [ ] `make ojs-gen-secrets` → copy `salt` and `api_key_secret` into `config/ojs.config.inc.php` `[security]` section, then `make ojs-config`
@@ -97,6 +132,7 @@ Before exposing this setup beyond localhost, go through:
 - [ ] If the DB was already initialized with default passwords, either `ALTER USER` via `make ojs-db-shell` or wipe `.docker_volumes/db` and re-init
 
 **For production deployment:**
+
 - [ ] Put a TLS-terminating reverse proxy (nginx, Traefik, Caddy) in front — set `force_ssl = On` and `cookie_encryption = On` in `config/ojs.config.inc.php`
 - [ ] If behind a reverse proxy, enable `trust_x_forwarded_for = On`
 - [ ] Set `allowed_hosts = '["your.domain.tld"]'` in `ojs.config.inc.php` to prevent HOST header injection
@@ -105,10 +141,12 @@ Before exposing this setup beyond localhost, go through:
 - [ ] Configure SMTP in `[email]` section with encrypted credentials, don't use `sendmail` stub
 
 **Non-issues in this setup (nginx proxy_pass in front):**
+
 - Apache runs as root inside the container to bind port 80 — fine, because the port is only reachable via `127.0.0.1:${DC_OJS_HTTP_PORT}` on the host and nginx terminates external traffic.
 - TLS/HTTPS is handled by nginx, not by Apache in the container.
 
 **Already hardened in this setup:**
+
 - `.env` gitignored; `docker-compose.yaml` fails fast if secrets missing
 - Apache: `ServerTokens Prod`, `ServerSignature Off`, `TraceEnable Off`, security headers
 - PHP: `expose_php = Off`, `allow_url_fopen = Off`, `session.cookie_httponly = 1`
