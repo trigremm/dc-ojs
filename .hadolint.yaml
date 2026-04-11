@@ -1,0 +1,4 @@
+ignored:
+  # Pin versions in apt get install — unrealistic for infra images,
+  # breaks security updates.
+  - DL3008

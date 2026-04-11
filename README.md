@@ -77,6 +77,23 @@ make ojs-shell       # bash into PHP container
 make ojs-db-shell    # mariadb CLI
 ```
 
+### Formatting and linting
+
+```bash
+make format          # prettier + shfmt + php-cs-fixer (skipped if not installed)
+make format-check    # prettier --check (fails if unformatted)
+make lint            # hadolint Dockerfile + shellcheck
+```
+
+Install the optional tools as you need them:
+
+```bash
+npm i -g prettier
+go install mvdan.cc/sh/v3/cmd/shfmt@latest
+brew install hadolint shellcheck
+composer global require friendsofphp/php-cs-fixer
+```
+
 ## Structure
 
 - `docker-compose.yaml` — `db` (MariaDB 11) + `ojs` (PHP 8.3 + Apache) services
