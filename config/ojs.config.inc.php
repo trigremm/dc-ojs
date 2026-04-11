@@ -33,7 +33,7 @@ app_key =
 installed = Off
 
 ; The canonical URL to the OJS installation (excluding the trailing slash)
-base_url = "http://localhost:8081"
+base_url = "http://localhost:8060"
 
 ; Enable strict mode. This will more aggressively cause errors/warnings when
 ; deprecated behaviour exists in the codebase.
@@ -59,7 +59,7 @@ session_samesite = Lax
 ; time zones.
 ; I.e.: "Europe/Amsterdam"
 ; time_zone="Europe/Amsterdam"
-time_zone = "UTC"
+time_zone = "Asia/Almaty"
 
 ; Short and long date formats
 date_format_short = "Y-m-d"
@@ -140,9 +140,9 @@ sandbox = Off
 
 driver = mysqli
 host = db
-username = ojs
-password = ojs
-name = ojs
+username =
+password =
+name =
 
 ; Set the non-standard port and/or socket, if used
 ; port = 3306

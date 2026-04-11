@@ -1,5 +1,9 @@
-# makefile_docker_compose.mk
+# makefiles/docker_compose.mk
 DC_BIN := docker compose
+
+# Helper: sources .env into the current shell invocation.
+# Use in recipes that need credentials: `$(LOAD_ENV); docker compose exec ...`
+LOAD_ENV := set -a; [ -f .env ] && . ./.env; set +a
 
 .PHONY: d r l rl
 .PHONY: deploy recreate

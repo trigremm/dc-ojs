@@ -1,0 +1,6 @@
+.git
+.docker_volumes
+.env
+.idea
+.vscode
+*.md

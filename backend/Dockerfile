@@ -6,25 +6,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     libicu-dev \
     libjpeg62-turbo-dev \
+    libonig-dev \
     libpng-dev \
     libxml2-dev \
     libzip-dev \
     unzip \
+    poppler-utils \
+    antiword \
+    catdoc \
     && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions required by OJS
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
     bcmath \
+    calendar \
+    exif \
+    ftp \
     gd \
     intl \
+    mbstring \
     mysqli \
     opcache \
+    pdo_mysql \
     xml \
     zip
 
 # Apache modules
-RUN a2enmod rewrite headers
+RUN a2enmod rewrite headers deflate expires
 
 # Prepare directories
 RUN mkdir -p /var/www/files \
