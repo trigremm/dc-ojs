@@ -1,4 +1,4 @@
-# makefiles/format.mk
+# makefile_format.mk
 # Formatters and linters for the repo. Each tool is optional — targets skip
 # the step with a warning if the binary is not on PATH. Install hints:
 #   npm i -g prettier
@@ -6,7 +6,9 @@
 #   brew install hadolint  (or: docker run --rm -i hadolint/hadolint)
 #   composer global require friendsofphp/php-cs-fixer
 
-.PHONY: format format-check lint
+.PHONY: f format format-check lint
+
+f: format
 
 # Format all supported files in place.
 format:

@@ -1,5 +1,7 @@
-# makefiles/ojs.mk
-# OJS deployment commands (simulates Plesk hosting workflow)
+# makefile_ojs.mk
+# OJS domain commands — all filesystem work runs INSIDE the ojs container so
+# files end up owned by www-data; the host user has no write access to the
+# bind-mounted .docker_volumes/html.
 
 OJS_VERSION ?= 3.5.0-3
 OJS_URL := https://pkp.sfu.ca/ojs/download/ojs-$(OJS_VERSION).tar.gz
@@ -7,18 +9,16 @@ OJS_URL := https://pkp.sfu.ca/ojs/download/ojs-$(OJS_VERSION).tar.gz
 # Obtain from: curl -sL https://pkp.sfu.ca/ojs/download/ojs-$(OJS_VERSION).tar.gz | sha256sum
 OJS_SHA256 ?=
 
-# All file operations run inside the ojs container so that files are owned by
-# www-data and the host user never needs write access to .docker_volumes/html.
-DC_EXEC_OJS := $(DC_BIN) exec -T ojs
+DC_EXEC_OJS := $(DC_BIN) exec -T $(BACKEND_SERVICE)
 
 .PHONY: ojs-install ojs-config ojs-clean ojs-cache-clear
-.PHONY: ojs-shell ojs-db-shell ojs-upgrade ojs-health
+.PHONY: ojs-db-shell ojs-upgrade ojs-health ojs-gen-secrets
 .PHONY: ojs-scheduler ojs-jobs ojs-backup ojs-restore
 
 # Download + extract OJS into /var/www/html inside the container.
 # Requires `make up` first (container must be running).
 ojs-install:
-	@$(DC_BIN) ps --status running --services | grep -qx ojs || { echo "ojs container is not running — run 'make up' first"; exit 1; }
+	@$(DC_BIN) ps --status running --services | grep -qx $(BACKEND_SERVICE) || { echo "$(BACKEND_SERVICE) container is not running — run 'make up' first"; exit 1; }
 	@echo "Downloading OJS $(OJS_VERSION) inside container..."
 	$(DC_EXEC_OJS) curl -fSL "$(OJS_URL)" -o /tmp/ojs.tar.gz
 	@if [ -n "$(OJS_SHA256)" ]; then \
@@ -60,11 +60,11 @@ ojs-cache-clear:
 
 # Run OJS scheduled tasks manually.
 ojs-scheduler:
-	$(DC_BIN) exec ojs php /var/www/html/lib/pkp/tools/scheduler.php run
+	$(DC_BIN) exec $(BACKEND_SERVICE) php /var/www/html/lib/pkp/tools/scheduler.php run
 
 # Run the queue worker to process pending jobs.
 ojs-jobs:
-	$(DC_BIN) exec ojs php /var/www/html/lib/pkp/tools/jobs.php work
+	$(DC_BIN) exec $(BACKEND_SERVICE) php /var/www/html/lib/pkp/tools/jobs.php work
 
 # Backup database dump + files archive into .docker_volumes/backups/.
 ojs-backup:
@@ -85,15 +85,12 @@ ojs-restore:
 	tar -xzf $$files -C .docker_volumes && \
 	echo "Restore done."
 
-# Shell access
-ojs-shell:
-	$(DC_BIN) exec ojs bash
-
+# DB shell — credentials loaded from .env.
 ojs-db-shell:
 	@$(LOAD_ENV); $(DC_BIN) exec -e MYSQL_PWD="$$OJS_DB_PASSWORD" db mariadb -u"$$OJS_DB_USER" "$$OJS_DB_NAME"
 
 ojs-upgrade:
-	$(DC_BIN) exec ojs php /var/www/html/tools/upgrade.php upgrade
+	$(DC_BIN) exec $(BACKEND_SERVICE) php /var/www/html/tools/upgrade.php upgrade
 
 ojs-health:
 	curl -fsS http://localhost:$${DC_OJS_HTTP_PORT:-8060}/index.php && echo " OK"
