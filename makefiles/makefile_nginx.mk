@@ -9,7 +9,7 @@ NGINX_SITES_AVAILABLE := /etc/nginx/sites-available
 NGINX_SITES_ENABLED := /etc/nginx/sites-enabled
 
 .PHONY: nginx-test nginx-reload nginx-status
-.PHONY: nginx-add-ojs-asmo-su
+.PHONY: nginx-add-ojs-asmo-su nginx-remove-ojs-asmo-su
 
 nginx-add-ojs-asmo-su:
 	sudo nginx -t
@@ -17,6 +17,11 @@ nginx-add-ojs-asmo-su:
 	sudo ln -sf $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf $(NGINX_SITES_ENABLED)/ojs.asmo.su.conf
 	sudo nginx -t && sudo nginx -s reload
 	sudo certbot certonly --nginx -d ojs.asmo.su --keep-until-expiring
+	sudo nginx -t && sudo nginx -s reload
+
+nginx-remove-ojs-asmo-su:
+	sudo rm -f $(NGINX_SITES_ENABLED)/ojs.asmo.su.conf
+	sudo rm -f $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf
 	sudo nginx -t && sudo nginx -s reload
 
 nginx-test:
