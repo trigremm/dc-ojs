@@ -33,7 +33,9 @@ app_key =
 installed = Off
 
 ; The canonical URL to the OJS installation (excluding the trailing slash)
-base_url = "http://localhost:8060"
+; Leave empty to let OJS infer from request headers (Host + X-Forwarded-Proto).
+; Requires Apache SetEnvIf for HTTPS when behind a TLS-terminating reverse proxy.
+base_url = ""
 
 ; Enable strict mode. This will more aggressively cause errors/warnings when
 ; deprecated behaviour exists in the codebase.
