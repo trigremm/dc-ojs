@@ -2,8 +2,9 @@
 # Nginx config deployment commands — copy site configs from x_nginx/ into
 # /etc/nginx/sites-available and symlink into sites-enabled, then reload.
 #
-# The OJS site config has a hardcoded SSL server block, so we obtain certs
-# via `certbot certonly` (not `certbot --nginx`, which would rewrite the file).
+# The vhost files ship HTTP-only. `certbot --nginx --redirect` is then run
+# against the live config to add the 443 server block, the HTTP->HTTPS
+# redirect, and manage cert renewal.
 
 NGINX_SITES_AVAILABLE := /etc/nginx/sites-available
 NGINX_SITES_ENABLED := /etc/nginx/sites-enabled
@@ -16,7 +17,7 @@ nginx-add-ojs-asmo-su:
 	sudo cp x_nginx/ojs.asmo.su.conf $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf
 	sudo ln -sf $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf $(NGINX_SITES_ENABLED)/ojs.asmo.su.conf
 	sudo nginx -t && sudo nginx -s reload
-	sudo certbot certonly --nginx -d ojs.asmo.su --keep-until-expiring
+	sudo certbot --nginx -d ojs.asmo.su --redirect --keep-until-expiring --non-interactive --agree-tos -m asmo@asmo.su
 	sudo nginx -t && sudo nginx -s reload
 
 nginx-remove-ojs-asmo-su:
