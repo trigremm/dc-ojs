@@ -6,3 +6,8 @@ include makefiles/makefile_git.mk
 include makefiles/makefile_nginx.mk
 include makefiles/makefile_ojs.mk
 include makefiles/makefile_setup.mk
+
+.PHONY: ssh
+
+ssh:
+	ssh test-asmo-server

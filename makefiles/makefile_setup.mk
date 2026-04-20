@@ -60,7 +60,15 @@ echo "Done. Open http://localhost:$${DC_OJS_HTTP_PORT:-8060} (behind nginx on th
 endef
 export SETUP_BOOTSTRAP
 
-.PHONY: setup
+.PHONY: setup howto-setup
 
 setup:
 	@echo "$$SETUP_BOOTSTRAP"
+
+howto-setup:
+	@echo 'ssh-keygen -t ed25519 -C "deploy-key-dc-ojs@$$(hostname)" -f ~/.ssh/deploy-key-dc-ojs'
+	@echo 'eval "$$(ssh-agent -s)" && ssh-add ~/.ssh/deploy-key-dc-ojs && cat ~/.ssh/deploy-key-dc-ojs.pub'
+	@echo "GIT_SSH_COMMAND='ssh -i ~/.ssh/deploy-key-dc-ojs' git clone git@github.com:trigremm/dc-ojs.git"
+	@echo 'cd dc-ojs'
+	@echo 'git config core.sshCommand "ssh -i ~/.ssh/deploy-key-dc-ojs"'
+	@echo 'sudo usermod -aG docker $$USER'
