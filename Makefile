@@ -5,7 +5,7 @@ include makefiles/makefile_format.mk
 include makefiles/makefile_git.mk
 include makefiles/makefile_nginx.mk
 include makefiles/makefile_ojs.mk
-include makefiles/makefile_setup.mk
+include makefiles/makefile_howto.mk
 
 .PHONY: ssh
 
