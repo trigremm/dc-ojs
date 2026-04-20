@@ -17,6 +17,7 @@ nginx-add-ojs-asmo-su:
 	sudo cp x_nginx/ojs.asmo.su.conf $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf
 	sudo ln -sf $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf $(NGINX_SITES_ENABLED)/ojs.asmo.su.conf
 	sudo nginx -t && sudo nginx -s reload
+	sleep 3
 	sudo certbot --nginx -d ojs.asmo.su --redirect --keep-until-expiring --non-interactive --agree-tos -m asmo@asmo.su
 	sudo nginx -t && sudo nginx -s reload
 
