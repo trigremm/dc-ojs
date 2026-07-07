@@ -17,6 +17,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # Cap container memory / process count so a runaway query can't exhaust the host.
+    mem_limit: 1g
+    pids_limit: 256
+    # Bound json-file logs so they can't grow unbounded on disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   ojs:
     build:
@@ -41,3 +50,12 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
+    # Cap container memory / process count so PHP-FPM/Apache workers can't exhaust the host.
+    mem_limit: 1g
+    pids_limit: 512
+    # Bound json-file logs so they can't grow unbounded on disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
