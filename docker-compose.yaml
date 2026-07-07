@@ -9,6 +9,8 @@ services:
       MYSQL_USER: "${OJS_DB_USER:?OJS_DB_USER must be set in .env}"
       MYSQL_PASSWORD: "${OJS_DB_PASSWORD:?OJS_DB_PASSWORD must be set in .env}"
     restart: always
+    # Give InnoDB time to flush a large buffer pool on shutdown before SIGKILL.
+    stop_grace_period: 1m
     volumes:
       - ./.docker_volumes/db:/var/lib/mysql
       - ./config/db.charset.conf:/etc/mysql/conf.d/charset.cnf
