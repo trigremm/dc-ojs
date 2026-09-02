@@ -3,11 +3,16 @@
 # files end up owned by www-data; the host user has no write access to the
 # bind-mounted .docker_volumes/html.
 
-OJS_VERSION ?= 3.5.0-3
+# OJS_VERSION / OJS_SHA256 are read from .env when present (quotes stripped);
+# the command line still wins: make ojs-install OJS_VERSION=3.5.0-4
+env_val = $(shell sed -n 's/^$(1)=//p' .env 2>/dev/null | tr -d "'\"" | head -1)
+OJS_VERSION ?= $(or $(call env_val,OJS_VERSION),3.5.0-3)
+OJS_VERSION := $(OJS_VERSION)
 OJS_URL := https://pkp.sfu.ca/ojs/download/ojs-$(OJS_VERSION).tar.gz
 # SHA256 of the upstream tarball. Set OJS_SHA256 in .env to enable verification.
 # Obtain from: curl -sL https://pkp.sfu.ca/ojs/download/ojs-$(OJS_VERSION).tar.gz | sha256sum
-OJS_SHA256 ?=
+OJS_SHA256 ?= $(call env_val,OJS_SHA256)
+OJS_SHA256 := $(OJS_SHA256)
 
 DC_EXEC_OJS := $(DC_BIN) exec -T $(BACKEND_SERVICE)
 
@@ -39,7 +44,7 @@ ojs-install:
 	$(DC_EXEC_OJS) chmod -R 775 /var/www/html/cache /var/www/html/public /var/www/files
 	@echo ""
 	@echo "OJS $(OJS_VERSION) installed."
-	@echo "Visit http://localhost:$${DC_OJS_HTTP_PORT:-8060} to run the web installer."
+	@$(LOAD_ENV); echo "Visit http://localhost:$${DC_OJS_HTTP_PORT:-8060} to run the web installer."
 
 # Copy config.inc.php into the running container (pipe via stdin).
 ojs-config:
@@ -93,7 +98,7 @@ ojs-upgrade:
 	$(DC_BIN) exec $(BACKEND_SERVICE) php /var/www/html/tools/upgrade.php upgrade
 
 ojs-health:
-	curl -fsS http://localhost:$${DC_OJS_HTTP_PORT:-8060}/index.php && echo " OK"
+	@$(LOAD_ENV); curl -fsS http://localhost:$${DC_OJS_HTTP_PORT:-8060}/index.php && echo " OK"
 
 # Generate secure random values for config/ojs.config.inc.php (salt, api_key_secret).
 # Print them — user copies into the config file manually.
