@@ -98,8 +98,8 @@ composer global require friendsofphp/php-cs-fixer
 
 - `docker-compose.yaml` — `db` (MariaDB 11) + `ojs` (PHP 8.3 + Apache) services
 - `backend/` — Dockerfile, apache.conf for the `ojs` image
-- `config/` — mounted into containers: `php.custom.ini`, `db.charset.conf`, `ojs.config.inc.php`
-- `makefiles/` — Makefile fragments (`docker_compose.mk`, `ojs.mk`) included from root `Makefile`
+- `config/` — `php.custom.ini` and `db.charset.conf` are bind-mounted; `ojs.config.inc.php` is copied in by `make ojs-config` (not mounted, so the web installer can rewrite it)
+- `makefiles/` — seven `makefile_*.mk` fragments (docker_compose, docker, format, git, nginx, ojs, howto), each included explicitly from the root `Makefile`
 - `.docker_volumes/` — persistent data (db, html, private, apache_logs, backups) — gitignored
 
 ## Storage
