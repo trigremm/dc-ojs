@@ -6,8 +6,8 @@
 
 - `docker-compose.yaml` — два сервиса: `db` (MariaDB 11) и `ojs` (PHP 8.3 + Apache)
 - `backend/` — Dockerfile и apache.conf для сервиса `ojs`
-- `config/` — файлы, монтируемые в контейнеры (`php.custom.ini`, `db.charset.conf`, `ojs.config.inc.php`)
-- `makefiles/` — фрагменты Makefile (`docker_compose.mk`, `ojs.mk`), подключаются явно из корневого `Makefile`
+- `config/` — `php.custom.ini` и `db.charset.conf` монтируются в контейнеры; `ojs.config.inc.php` не монтируется, а копируется внутрь через `make ojs-config`
+- `makefiles/` — семь фрагментов `makefile_*.mk` (docker_compose, docker, format, git, nginx, ojs, howto), подключаются явно из корневого `Makefile`
 - `.docker_volumes/` — данные БД, `html` (OJS-файлы), `private` (загрузки), `apache_logs`, `backups` — всё в `.gitignore`
 
 ## Workflow
@@ -26,7 +26,7 @@ make ojs-install           # скачать + распаковать OJS вну�
 Ключевые цели:
 
 - `make up` / `stop` / `down` / `ps` / `logs` / `build` — обёртки над `docker compose`
-- `make r` (recreate) — build + stop + up
+- `make r` (recreate) — build + down + up + ps
 - `make ojs-install` — скачивает OJS внутри контейнера (`docker compose exec ojs curl ... | tar`), распаковывает в `/var/www/html`, затем `ojs-config` и chown/chmod
 - `make ojs-config` — пайпит `config/ojs.config.inc.php` в контейнер через `tee`
 - `make ojs-clean` — `rm -rf /var/www/html/*` внутри контейнера
@@ -43,4 +43,4 @@ make ojs-install           # скачать + распаковать OJS вну�
 
 ## Версия OJS
 
-`OJS_VERSION` в `.env` — используется `makefiles/ojs.mk` для скачивания тарбола с `pkp.sfu.ca`. Текущая: `3.5.0-3` (релиз 19.12.2025). Актуальная: см. https://github.com/pkp/ojs/tags
+`OJS_VERSION` задаётся в `makefiles/makefile_ojs.mk` (`OJS_VERSION ?= 3.5.0-3`) и используется для скачивания тарбола с `pkp.sfu.ca`; переопределяется как `make ojs-install OJS_VERSION=...`. Значение из `.env` рецепт не читает (в нём нет `LOAD_ENV`). Текущая: `3.5.0-3` (релиз 19.12.2025). Актуальная: см. https://github.com/pkp/ojs/tags

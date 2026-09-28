@@ -1,3 +1,7 @@
+# NOTE: This file is INERT. The ojs service sets build.context: ./backend in
+# docker-compose.yaml, so docker only reads backend/.dockerignore during the
+# build. This root .dockerignore is kept for editor/tooling hygiene but has no
+# effect on the image build. Edit backend/.dockerignore to change build context.
 .git
 .docker_volumes
 .env
