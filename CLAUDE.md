@@ -43,4 +43,4 @@ make ojs-install           # скачать + распаковать OJS вну�
 
 ## Версия OJS
 
-`OJS_VERSION` задаётся в `makefiles/makefile_ojs.mk` (`OJS_VERSION ?= 3.5.0-3`) и используется для скачивания тарбола с `pkp.sfu.ca`; переопределяется как `make ojs-install OJS_VERSION=...`. Значение из `.env` рецепт не читает (в нём нет `LOAD_ENV`). Текущая: `3.5.0-3` (релиз 19.12.2025). Актуальная: см. https://github.com/pkp/ojs/tags
+`OJS_VERSION` и `OJS_SHA256` рецепт `makefiles/makefile_ojs.mk` читает из `.env` через `env_val` (кавычки снимаются). Без `.env` версия по умолчанию — `3.5.0-3`, а проверка sha256 пропускается. Командная строка важнее `.env`: `make ojs-install OJS_VERSION=...`. Версия нужна для скачивания тарбола с `pkp.sfu.ca`. Текущая: `3.5.0-3` (релиз 19.12.2025). Актуальная: см. https://github.com/pkp/ojs/tags
