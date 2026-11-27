@@ -14,7 +14,8 @@ NGINX_SITES_ENABLED := /etc/nginx/sites-enabled
 
 nginx-add-ojs-asmo-su:
 	sudo nginx -t
-	sudo cp x_nginx/ojs.asmo.su.conf $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf
+	# proxy_pass port follows DC_OJS_HTTP_PORT from .env (the shipped file defaults to 8060)
+	@$(LOAD_ENV); sed -E "s|(proxy_pass http://127\.0\.0\.1:)[0-9]+;|\1$${DC_OJS_HTTP_PORT:-8060};|" x_nginx/ojs.asmo.su.conf | sudo tee $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf >/dev/null
 	sudo ln -sf $(NGINX_SITES_AVAILABLE)/ojs.asmo.su.conf $(NGINX_SITES_ENABLED)/ojs.asmo.su.conf
 	sudo nginx -t && sudo nginx -s reload
 	sleep 3
