@@ -48,6 +48,7 @@ make down            # stop and remove
 make r               # rebuild image + recreate containers
 make logs            # tail logs
 make ps              # list containers
+make d               # deploy: git pull + recreate + image/builder prune
 ```
 
 ### OJS lifecycle
@@ -75,6 +76,7 @@ make ojs-restore     # restore the latest backup
 ```bash
 make ojs-shell       # bash into PHP container
 make ojs-db-shell    # mariadb CLI
+make ssh             # ssh test-asmo-server (host shortcut in Makefile)
 ```
 
 ### Formatting and linting
@@ -98,8 +100,8 @@ composer global require friendsofphp/php-cs-fixer
 
 - `docker-compose.yaml` — `db` (MariaDB 11) + `ojs` (PHP 8.3 + Apache) services
 - `backend/` — Dockerfile, apache.conf for the `ojs` image
-- `config/` — mounted into containers: `php.custom.ini`, `db.charset.conf`, `ojs.config.inc.php`
-- `makefiles/` — Makefile fragments (`docker_compose.mk`, `ojs.mk`) included from root `Makefile`
+- `config/` — `php.custom.ini` and `db.charset.conf` are bind-mounted; `ojs.config.inc.php` is copied in by `make ojs-config` (not mounted, so the web installer can rewrite it)
+- `makefiles/` — seven `makefile_*.mk` fragments (docker_compose, docker, format, git, nginx, ojs, howto), each included explicitly from the root `Makefile`
 - `.docker_volumes/` — persistent data (db, html, private, apache_logs, backups) — gitignored
 
 ## Storage
@@ -175,12 +177,12 @@ Before exposing this setup beyond localhost, go through:
 
 This setup is designed to sit behind an existing host-level nginx that terminates TLS and proxies to `127.0.0.1:${DC_OJS_HTTP_PORT}`.
 
-A ready-to-use config lives in [`x_nginx/ojs.asmo.su.conf`](x_nginx/ojs.asmo.su.conf) — copy it to `/etc/nginx/sites-available/`, adjust the `server_name` / cert paths, then:
+A ready-to-use HTTP-only vhost lives in [`x_nginx/ojs.asmo.su.conf`](x_nginx/ojs.asmo.su.conf). Deploy it with the make targets (they copy it to `sites-available`, enable it, reload nginx and run `certbot --nginx --redirect`, which adds the 443 block and the HTTPS redirect):
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/ojs.asmo.su.conf /etc/nginx/sites-enabled/
-sudo certbot certonly --nginx -d ojs.asmo.su
-sudo nginx -t && sudo systemctl reload nginx
+make nginx-add-ojs-asmo-su      # deploy vhost + certbot-issued cert + HTTPS redirect
+make nginx-status               # enabled / available / not deployed per tracked vhost
+make nginx-remove-ojs-asmo-su   # remove vhost, reload
 ```
 
 See [`x_nginx/README.md`](x_nginx/README.md) for the full install procedure and the OJS-side settings to flip after switching to a real domain (`base_url`, `allowed_hosts`, `trust_x_forwarded_for`, `force_ssl`).
