@@ -165,7 +165,9 @@ debug = Off
 
 ; Default driver for Laravel-based caching. Currently supports opcache and file drivers.
 ; By default, the file is used.
-; default = file
+; OPcache is enabled and generously sized in php.custom.ini, so use it as the
+; object cache backend for lower latency than the file driver.
+default = opcache
 
 ; Path to store cache contents for file or opcode based caches.
 ; path = cache/opcache
